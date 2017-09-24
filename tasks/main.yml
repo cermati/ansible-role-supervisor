@@ -21,6 +21,12 @@
     state: directory
     mode: 0755
 
+- name: Ensure Supervisor pid dir exists.
+  file:
+    path: "{{ supervisor_run_dir }}"
+    state: directory
+    mode: 0755
+
 - include: config.yml
 
 - include: init-setup.yml

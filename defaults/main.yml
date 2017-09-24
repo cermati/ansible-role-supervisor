@@ -29,7 +29,7 @@ supervisor_programs: []
 supervisor_nodaemon: false
 
 supervisor_log_dir: /var/log/supervisor
-
+supervisor_run_dir: /var/run/supervisor
 supervisor_user: root
 supervisor_password: 'my_secret_password'
 
@@ -38,6 +38,5 @@ supervisor_unix_http_server_socket_path: /var/run/supervisor.sock
 
 supervisor_inet_http_server_enable: false
 supervisor_inet_http_server_port: '*:9001'
-
-supervisord_logfile: /var/log/supervisor/supervisord.log
-supervisord_pidfile: /var/run/supervisor/supervisord.pid
+supervisord_logfile: "{{supervisor_log_dir}}/supervisord.log"
+supervisord_pidfile: "{{supervisor_run_dir}}/supervisord.pid"
