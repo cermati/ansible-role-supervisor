@@ -29,7 +29,7 @@ supervisor_programs: []
 supervisor_nodaemon: false
 
 supervisor_log_dir: /var/log/supervisor
-supervisor_run_dir: /var/run/supervisor
+supervisor_run_dir: /var/run
 supervisor_user: root
 supervisor_password: 'my_secret_password'
 
