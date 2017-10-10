@@ -1,5 +1,7 @@
 [program:{{ item.name }}]
 command={{ item.command }}
 {% if item.configuration is defined %}
-{{ item.configuration }}
+{% for k, v in item.configuration.iteritems() %}
+{{k}}={{v}}
+{% endfor %}
 {% endif %}
