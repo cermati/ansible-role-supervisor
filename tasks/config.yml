@@ -9,6 +9,7 @@
   with_items:
     - "{{ supervisor_config_path }}"
     - "{{ supervisor_config_path }}/conf.d"
+    - "{{ supervisor_config_path }}/conf.d/groups"
 
 - name: Ensure Supervisor configuration is present.
   template:
@@ -27,4 +28,16 @@
     mode: 0644
   when: item.state|default('present') != 'absent'
   with_items: "{{ supervisor_programs }}"
+  notify: restart supervisor
+
+- name: Ensure Supervisor group configs are present.
+  template:
+    src: group.conf.j2
+    dest: "{{ supervisor_config_path }}/conf.d/groups/{{ item.name }}.conf"
+    force: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: item.state|default('present') != 'absent'
+  with_items: "{{ supervisor_groups }}"
   notify: restart supervisor
