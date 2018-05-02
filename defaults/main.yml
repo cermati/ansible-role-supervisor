@@ -26,6 +26,15 @@ supervisor_programs: []
   #     killasgroup=true
   #     stopasgroup=true
 
+# A list of `groups`s Supervisor will control. Example commented out below.
+supervisor_groups: []
+  # - name: application-processor
+  #   state: present
+  #   programs:
+  #     - categorize-browser-history
+  #     - categorize-installed-app
+  #     - check-reference
+
 supervisor_nodaemon: false
 
 supervisor_log_dir: /var/log/supervisor

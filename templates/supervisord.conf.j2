@@ -23,7 +23,7 @@ serverurl = http://localhost:{{ supervisor_inet_http_server_port }}
 {% endif %}
 
 [include]
-files = {{ supervisor_config_path }}/conf.d/*.conf {{ supervisor_config_path }}/conf.d/group/*.conf
+files = {{ supervisor_config_path }}/conf.d/*.conf {{ supervisor_config_path }}/conf.d/groups/*.conf
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
