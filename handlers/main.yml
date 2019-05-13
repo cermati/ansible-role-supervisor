@@ -1,4 +1,63 @@
 ---
-- name: restart supervisor
-  service: name=supervisord state=restarted
+- name: Reload supervisord config
+  command: "{{ supervisorctl_bin_path }} update"
   when: supervisor_started
+
+- name: Restart supervisord
+  debug: msg="Restart supervisord"
+  when: supervisor_started
+  changed_when: true
+  notify:
+    - Restart supervisord (service)
+    - Restart supervisord (systemd)
+
+
+# Restart method for non-systemd
+- name: Restart supervisord (service)
+  service:
+    name: supervisord
+    state: restarted
+  when: ansible_service_mgr != 'systemd'
+
+
+# Restart method chain for systemd
+- name: Restart supervisord (systemd)
+  debug: msg="Restart supervisord (systemd)"
+  when: ansible_service_mgr == 'systemd'
+  changed_when: true
+  notify:
+    - "Restart supervisord (systemd): Stop supervisord service via systemd"
+    - "Restart supervisord (systemd): Shutdown supervisord process"
+    - "Restart supervisord (systemd): Get supervisord PID"
+    - "Restart supervisord (systemd): Wait until supervisord is stopped"
+    - "Restart supervisord (systemd): Restart supervisord"
+
+# Using `command` is required to actually set the service's state to
+# `inactive`. Stopping with `service` module won't change the state of
+# `activating` service, which will make systemd start supervisord
+# immediately after "Wait until supervisord is stopped" if the service is
+# stuck on `activating` state.
+- name: "Restart supervisord (systemd): Stop supervisord service via systemd"
+  command: systemctl stop supervisord
+
+- name: "Restart supervisord (systemd): Shutdown supervisord process"
+  command: supervisorctl shutdown
+  ignore_errors: true   # Will crash if the process is already dead
+
+- name: "Restart supervisord (systemd): Get supervisord PID"
+  shell: ps aux | grep supervisord | grep -v grep | awk '{ printf $2 }'
+  register: supervisord_pid
+  ignore_errors: true   # Will crash if the process is already dead
+
+# Sometimes `supervisorctl shutdown` will exit even if the daemon is still
+# running
+- name: "Restart supervisord (systemd): Wait until supervisord is stopped"
+  wait_for:
+    path: "/proc/{{ supervisord_pid.stdout }}/status"
+    state: absent
+  when: supervisord_pid.rc == 0 and supervisord_pid.stdout != ''
+
+- name: "Restart supervisord (systemd): Restart supervisord"
+  service:
+    name: supervisord
+    state: restarted

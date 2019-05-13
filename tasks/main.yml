@@ -31,6 +31,40 @@
     name: supervisord
     state: started
   when: supervisor_started
+  register: supervisord_start
+  ignore_errors: true
+
+- block:
+    # Using `command` is required to actually set the service's state to
+    # `inactive`. Stopping with `service` module won't change the state of
+    # `activating` service, which will make systemd start supervisord
+    # immediately after "Wait until supervisord is stopped" if the service is
+    # stuck on `activating` state.
+    - name: Stop supervisord service via systemd
+      command: systemctl stop supervisord
+
+    - name: Shutdown supervisord process
+      command: supervisorctl shutdown
+      ignore_errors: true   # Will crash if the process is already dead
+
+    - name: Get supervisord PID
+      shell: ps aux | grep supervisord | grep -v grep | awk '{ printf $2 }'
+      register: supervisord_pid
+      ignore_errors: true   # Will crash if the process is already dead
+
+    # Sometimes `supervisorctl shutdown` will exit even if the daemon is still
+    # running
+    - name: Wait until supervisord is stopped
+      wait_for:
+        path: "/proc/{{ supervisord_pid.stdout }}/status"
+        state: absent
+      when: supervisord_pid.rc == 0 and supervisord_pid.stdout != ''
+
+    - name: "Ensure Supervisor is started (attempt #2)"
+      service:
+        name: supervisord
+        state: restarted
+  when: (supervisord_start.failed | default(false, true)) and ansible_service_mgr == 'systemd'
 
 - name: Ensure Supervisor is enabled at boot (if configured).
   service:
